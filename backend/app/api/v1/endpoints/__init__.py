@@ -1,0 +1,33 @@
+from app.api.v1.endpoints import (
+    admin_audit,
+    admin_analytics,
+    admin_billing,
+    admin_customers,
+    admin_exports,
+    admin_milk_entries,
+    admin_payments,
+    admin_summary,
+    auth,
+    customer_bills,
+    customer_exports,
+    customer_logs,
+    customer_payments,
+    pdf_bills,
+)
+
+__all__ = [
+    "admin_audit",
+    "admin_analytics",
+    "admin_billing",
+    "admin_customers",
+    "admin_exports",
+    "admin_milk_entries",
+    "admin_payments",
+    "admin_summary",
+    "auth",
+    "customer_bills",
+    "customer_exports",
+    "customer_logs",
+    "customer_payments",
+    "pdf_bills",
+]

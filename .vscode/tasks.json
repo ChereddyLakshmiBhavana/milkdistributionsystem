@@ -1,0 +1,50 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Backend dependency check",
+			"type": "shell",
+			"command": "c:\\Users\\bhava\\OneDrive\\Desktop\\milkdistributionsystem\\.venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import fastapi, sqlalchemy, pydantic; print('backend_imports_ok')"
+			]
+		},
+		{
+			"label": "Frontend build check",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd frontend && npm run build"
+			]
+		},
+		{
+			"label": "Backend pytest run",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd backend && ..\\.venv\\Scripts\\python.exe -m pytest -q"
+			]
+		},
+		{
+			"label": "Frontend test run",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd frontend && npm run test"
+			]
+		},
+		{
+			"label": "Frontend build run",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd frontend && npm run build"
+			]
+		}
+	]
+}

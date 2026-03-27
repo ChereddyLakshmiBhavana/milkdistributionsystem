@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+backend/.env
+
+# Node
+node_modules/
+frontend/.env
+
+# Build
+build/
+dist/
+
+# IDE
+.vscode/settings.json

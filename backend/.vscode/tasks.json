@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Backend dependency check",
+			"type": "shell",
+			"command": "..\\.venv\\Scripts\\python.exe",
+			"args": [
+				"-c",
+				"import fastapi, sqlalchemy, pydantic; print('backend_imports_ok')"
+			]
+		}
+	]
+}
