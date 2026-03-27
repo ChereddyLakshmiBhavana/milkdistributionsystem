@@ -1,13 +1,13 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_admin
 from app.db.session import get_db
 from app.models import MilkEntry, MonthlyBill, User, UserRole, UserStatus
-from app.schemas.milk_entry import MilkEntryCreate, MilkEntryOut, MilkEntryUpdate
+from app.schemas.milk_entry import DateWiseCustomerPurchaseOut, MilkEntryCreate, MilkEntryOut, MilkEntryUpdate
 from app.services.audit_service import create_audit_log
 from app.services.milk_service import calculate_amount
 
@@ -67,6 +67,46 @@ def list_entries(
         .order_by(MilkEntry.entry_date)
     )
     return list(entries)
+
+
+@router.get("/by-date", response_model=list[DateWiseCustomerPurchaseOut])
+def list_entries_by_date(
+    entry_date: date,
+    db: Session = Depends(get_db),
+    _admin=Depends(require_admin),
+):
+    rows = db.execute(
+        select(
+            User.id,
+            User.name,
+            User.phone,
+            User.address,
+            func.coalesce(func.sum(MilkEntry.quantity_liters), 0),
+            func.coalesce(func.sum(MilkEntry.amount), 0),
+            func.count(MilkEntry.id),
+        )
+        .join(MilkEntry, MilkEntry.customer_id == User.id)
+        .where(
+            MilkEntry.entry_date == entry_date,
+            User.role == UserRole.CUSTOMER,
+            User.status == UserStatus.APPROVED,
+        )
+        .group_by(User.id, User.name, User.phone, User.address)
+        .order_by(User.name.asc())
+    ).all()
+
+    return [
+        DateWiseCustomerPurchaseOut(
+            customer_id=row[0],
+            customer_name=row[1],
+            phone=row[2],
+            address=row[3],
+            total_liters=row[4],
+            total_amount=row[5],
+            entry_count=row[6],
+        )
+        for row in rows
+    ]
 
 
 @router.patch("/{entry_id}", response_model=MilkEntryOut)

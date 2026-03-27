@@ -24,3 +24,13 @@ class MilkEntryOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class DateWiseCustomerPurchaseOut(BaseModel):
+    customer_id: int
+    customer_name: str
+    phone: str
+    address: str | None = None
+    total_liters: Decimal
+    total_amount: Decimal
+    entry_count: int

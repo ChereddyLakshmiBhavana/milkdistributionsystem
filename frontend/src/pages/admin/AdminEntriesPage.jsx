@@ -5,6 +5,7 @@ import {
   deleteMilkEntry,
   downloadDailyLogsPdf,
   getCustomers,
+  listDateWiseCustomerPurchases,
   listCustomerBills,
   listMilkEntries,
   updateMilkEntry,
@@ -27,6 +28,8 @@ export default function AdminEntriesPage({ lang }) {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [entries, setEntries] = useState([]);
+  const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));
+  const [dateWiseRows, setDateWiseRows] = useState([]);
   const [isSelectedMonthLocked, setIsSelectedMonthLocked] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [message, setMessage] = useState("");
@@ -73,6 +76,11 @@ export default function AdminEntriesPage({ lang }) {
     setEntries(entriesData);
   };
 
+  const refreshDateWisePurchases = async (targetDate = reportDate) => {
+    const rows = await listDateWiseCustomerPurchases(targetDate);
+    setDateWiseRows(rows);
+  };
+
   const refreshLockState = async (customerId, y = year, m = month) => {
     if (!customerId) {
       setIsSelectedMonthLocked(false);
@@ -94,11 +102,22 @@ export default function AdminEntriesPage({ lang }) {
     (async () => {
       try {
         await refreshCustomers();
+        await refreshDateWisePurchases();
       } catch (err) {
         setError(err?.response?.data?.detail || t(lang, "failedLoadCustomers"));
       }
     })();
   }, [lang]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await refreshDateWisePurchases();
+      } catch (err) {
+        setError(err?.response?.data?.detail || t(lang, "actionFailed"));
+      }
+    })();
+  }, [reportDate]);
 
   useEffect(() => {
     (async () => {
@@ -296,6 +315,43 @@ export default function AdminEntriesPage({ lang }) {
             {entries.length === 0 && (
               <tr>
                 <td colSpan={4}>{t(lang, "noEntriesMonth")}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card">
+        <h3>{t(lang, "purchasesByDate")}</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 280px) auto", gap: 10, marginBottom: 10 }}>
+          <input type="date" value={reportDate} onChange={(e) => setReportDate(e.target.value)} />
+          <button onClick={() => doAction(() => refreshDateWisePurchases(reportDate))}>{t(lang, "refresh")}</button>
+        </div>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t(lang, "customerName")}</th>
+              <th>{t(lang, "phone")}</th>
+              <th>{t(lang, "address")}</th>
+              <th>{t(lang, "purchasedLiters")}</th>
+              <th>{t(lang, "amount")}</th>
+              <th>{t(lang, "numberOfEntries")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dateWiseRows.map((item) => (
+              <tr key={item.customer_id}>
+                <td>{item.customer_name}</td>
+                <td>{item.phone}</td>
+                <td>{item.address || "-"}</td>
+                <td>{item.total_liters}</td>
+                <td>Rs {item.total_amount}</td>
+                <td>{item.entry_count}</td>
+              </tr>
+            ))}
+            {dateWiseRows.length === 0 && (
+              <tr>
+                <td colSpan={6}>{t(lang, "noPurchasesForDate")}</td>
               </tr>
             )}
           </tbody>

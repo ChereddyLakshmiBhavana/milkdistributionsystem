@@ -69,6 +69,13 @@ export const listMilkEntries = async (customerId, startDate, endDate) => {
   return data;
 };
 
+export const listDateWiseCustomerPurchases = async (entryDate) => {
+  const { data } = await apiClient.get("/admin/milk-entries/by-date", {
+    params: { entry_date: entryDate },
+  });
+  return data;
+};
+
 export const generateBill = async (customerId, year, month) => {
   const { data } = await apiClient.post(`/admin/bills/generate/${customerId}`, null, {
     params: { year, month },

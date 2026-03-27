@@ -45,6 +45,7 @@ Optional admin audit filters:
 ## Admin milk entries
 - POST /admin/milk-entries
 - GET /admin/milk-entries?customer_id=&start_date=&end_date=
+- GET /admin/milk-entries/by-date?entry_date=
 - PATCH /admin/milk-entries/{entry_id}
 - DELETE /admin/milk-entries/{entry_id}
 
