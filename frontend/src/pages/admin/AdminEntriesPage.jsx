@@ -31,6 +31,27 @@ export default function AdminEntriesPage({ lang }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const controlGridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 10,
+  };
+
+  const workspaceGridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    gap: 12,
+    marginTop: 12,
+    alignItems: "start",
+  };
+
+  const panelStyle = {
+    border: "1px solid #d9dee8",
+    borderRadius: 10,
+    padding: 12,
+    background: "#fbfcff",
+  };
+
   const selectedCustomer = useMemo(
     () => customers.find((item) => String(item.id) === String(selectedCustomerId)),
     [customers, selectedCustomerId]
@@ -153,7 +174,7 @@ export default function AdminEntriesPage({ lang }) {
         <h3>{t(lang, "entries")}</h3>
         {message && <p style={{ color: "#0a6b2f" }}>{message}</p>}
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10 }}>
+        <div style={controlGridStyle}>
           <select value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
             <option value="">{t(lang, "selectCustomer")}</option>
             {customers.map((item) => (
@@ -164,41 +185,64 @@ export default function AdminEntriesPage({ lang }) {
           </select>
           <input type="number" value={year} onChange={(e) => setYear(e.target.value)} placeholder={t(lang, "year")} />
           <input type="number" value={month} onChange={(e) => setMonth(e.target.value)} placeholder={t(lang, "month")} min="1" max="12" />
-          <div>{selectedCustomer ? `${t(lang, "selected")}: ${selectedCustomer.name}` : ""}</div>
+          <div style={{ alignSelf: "center" }}>{selectedCustomer ? `${t(lang, "selected")}: ${selectedCustomer.name}` : ""}</div>
         </div>
-        {selectedCustomerId && (
-          <div style={{ marginTop: 10 }}>
-            <span className={isSelectedMonthLocked ? "status-unpaid" : "status-paid"}>
-              {t(lang, "monthLockStatus")}: {isSelectedMonthLocked ? t(lang, "locked") : t(lang, "unlocked")}
-            </span>
-          </div>
-        )}
-      </div>
 
-      <div className="card">
-        <h3>{editingEntryId ? t(lang, "editMilkEntry") : t(lang, "addMilkEntry")}</h3>
-        {isSelectedMonthLocked && <p style={{ color: "#8a5a00" }}>{t(lang, "entriesLockedNotice")}</p>}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10 }}>
-          <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} disabled={isSelectedMonthLocked} />
-          <select value={quantity} onChange={(e) => setQuantity(e.target.value)} disabled={isSelectedMonthLocked}>
-            <option value="0.50">0.50 L</option>
-            <option value="0.75">0.75 L</option>
-            <option value="1.00">1.00 L</option>
-          </select>
-          <button onClick={onSaveEntry} disabled={isSelectedMonthLocked}>
-            {editingEntryId ? t(lang, "updateEntry") : t(lang, "addMilkEntry")}
-          </button>
-          {editingEntryId && (
-            <button
-              onClick={() => {
-                setEditingEntryId(null);
-                setQuantity("1.00");
-              }}
-            >
-              {t(lang, "cancelEdit")}
-            </button>
-          )}
-        </div>
+        {selectedCustomerId ? (
+          <div style={workspaceGridStyle}>
+            <section style={panelStyle}>
+              <h4 style={{ marginTop: 0 }}>{t(lang, "customerDetails")}</h4>
+              <div style={{ display: "grid", gap: 8 }}>
+                <div>
+                  <strong>{t(lang, "name")}:</strong> {selectedCustomer?.name || "-"}
+                </div>
+                <div>
+                  <strong>{t(lang, "phone")}:</strong> {selectedCustomer?.phone || "-"}
+                </div>
+                <div>
+                  <strong>{t(lang, "address")}:</strong> {selectedCustomer?.address || "-"}
+                </div>
+                <div>
+                  <strong>{t(lang, "month")}:</strong> {month}/{year}
+                </div>
+                <div>
+                  <strong>{t(lang, "monthLockStatus")}:</strong>{" "}
+                  <span className={isSelectedMonthLocked ? "status-unpaid" : "status-paid"}>
+                    {isSelectedMonthLocked ? t(lang, "locked") : t(lang, "unlocked")}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section style={panelStyle}>
+              <h4 style={{ marginTop: 0 }}>{editingEntryId ? t(lang, "editMilkEntry") : t(lang, "dailyPacketUpdate")}</h4>
+              {isSelectedMonthLocked && <p style={{ color: "#8a5a00" }}>{t(lang, "entriesLockedNotice")}</p>}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+                <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} disabled={isSelectedMonthLocked} />
+                <select value={quantity} onChange={(e) => setQuantity(e.target.value)} disabled={isSelectedMonthLocked}>
+                  <option value="0.50">0.50 L</option>
+                  <option value="0.75">0.75 L</option>
+                  <option value="1.00">1.00 L</option>
+                </select>
+                <button onClick={onSaveEntry} disabled={isSelectedMonthLocked}>
+                  {editingEntryId ? t(lang, "updateEntry") : t(lang, "addMilkEntry")}
+                </button>
+                {editingEntryId && (
+                  <button
+                    onClick={() => {
+                      setEditingEntryId(null);
+                      setQuantity("1.00");
+                    }}
+                  >
+                    {t(lang, "cancelEdit")}
+                  </button>
+                )}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <p style={{ marginTop: 12 }}>{t(lang, "selectCustomerToManageEntries")}</p>
+        )}
       </div>
 
       <div className="card">
