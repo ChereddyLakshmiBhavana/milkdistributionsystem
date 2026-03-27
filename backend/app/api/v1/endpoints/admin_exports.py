@@ -1,9 +1,11 @@
 import csv
 from calendar import monthrange
 from datetime import date, datetime, time
-from io import StringIO
+from io import BytesIO, StringIO
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -55,6 +57,94 @@ def export_monthly_entries(
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/daily-logs.pdf")
+def export_daily_logs_pdf(
+    customer_id: int = Query(...),
+    year: int = Query(...),
+    month: int = Query(...),
+    db: Session = Depends(get_db),
+    _admin=Depends(require_admin),
+):
+    start, end = _month_bounds(year, month)
+    customer = db.get(User, customer_id)
+    if not customer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+
+    entries = list(
+        db.scalars(
+            select(MilkEntry)
+            .where(
+                MilkEntry.customer_id == customer_id,
+                MilkEntry.entry_date >= start,
+                MilkEntry.entry_date <= end,
+            )
+            .order_by(MilkEntry.entry_date.asc())
+        )
+    )
+
+    total_liters = sum((float(entry.quantity_liters) for entry in entries), 0.0)
+    total_amount = sum((float(entry.amount) for entry in entries), 0.0)
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    pdf.setTitle(f"daily-logs-{customer_id}-{year}-{month:02d}")
+
+    y = 800
+    pdf.drawString(50, y, "Milk Distribution Daily Logs")
+    y -= 22
+    pdf.drawString(50, y, f"Customer: {customer.name}")
+    y -= 18
+    pdf.drawString(50, y, f"Phone: {customer.phone}")
+    y -= 18
+    pdf.drawString(50, y, f"Month: {year}-{month:02d}")
+    y -= 24
+
+    pdf.drawString(50, y, "Date")
+    pdf.drawString(180, y, "Liters")
+    pdf.drawString(300, y, "Amount (Rs)")
+    y -= 12
+    pdf.line(50, y, 545, y)
+    y -= 16
+
+    if not entries:
+        pdf.drawString(50, y, "No daily logs available for this month.")
+        y -= 20
+    else:
+        for entry in entries:
+            if y < 70:
+                pdf.showPage()
+                y = 800
+                pdf.drawString(50, y, "Date")
+                pdf.drawString(180, y, "Liters")
+                pdf.drawString(300, y, "Amount (Rs)")
+                y -= 12
+                pdf.line(50, y, 545, y)
+                y -= 16
+
+            pdf.drawString(50, y, str(entry.entry_date))
+            pdf.drawString(180, y, f"{entry.quantity_liters}")
+            pdf.drawString(300, y, f"{entry.amount}")
+            y -= 18
+
+    y -= 6
+    pdf.line(50, y, 545, y)
+    y -= 20
+    pdf.drawString(50, y, f"Total Liters: {total_liters:.2f}")
+    y -= 18
+    pdf.drawString(50, y, f"Total Amount: Rs {total_amount:.2f}")
+
+    pdf.showPage()
+    pdf.save()
+
+    filename = f"daily_logs_customer_{customer_id}_{year}_{month:02d}.pdf"
+    buffer.seek(0)
+    return Response(
+        content=buffer.read(),
+        media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 

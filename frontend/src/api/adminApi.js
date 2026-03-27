@@ -125,6 +125,14 @@ export const downloadMonthlyEntriesCsv = async (year, month) => {
   triggerBlobDownload(response.data, `monthly_entries_${year}_${String(month).padStart(2, "0")}.csv`);
 };
 
+export const downloadDailyLogsPdf = async (customerId, year, month) => {
+  const response = await apiClient.get("/admin/exports/daily-logs.pdf", {
+    params: { customer_id: customerId, year, month },
+    responseType: "blob",
+  });
+  triggerBlobDownload(response.data, `daily_logs_customer_${customerId}_${year}_${String(month).padStart(2, "0")}.pdf`);
+};
+
 export const downloadMonthlyBillsCsv = async (year, month) => {
   const response = await apiClient.get("/admin/exports/monthly-bills.csv", {
     params: { year, month },

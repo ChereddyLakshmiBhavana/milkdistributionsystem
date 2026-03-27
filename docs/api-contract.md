@@ -27,6 +27,7 @@ Response behavior:
 
 ## Admin exports
 - GET /admin/exports/monthly-entries.csv?year=&month=
+- GET /admin/exports/daily-logs.pdf?customer_id=&year=&month=
 - GET /admin/exports/monthly-bills.csv?year=&month=
 - GET /admin/exports/audit-logs.csv?action=&entity_type=&q=&actor_user_id=&start_date=&end_date=
 

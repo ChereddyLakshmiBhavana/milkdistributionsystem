@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   createMilkEntry,
   deleteMilkEntry,
+  downloadDailyLogsPdf,
   getCustomers,
   listCustomerBills,
   listMilkEntries,
@@ -210,6 +211,17 @@ export default function AdminEntriesPage({ lang }) {
                   <span className={isSelectedMonthLocked ? "status-unpaid" : "status-paid"}>
                     {isSelectedMonthLocked ? t(lang, "locked") : t(lang, "unlocked")}
                   </span>
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    onClick={() =>
+                      doAction(() =>
+                        downloadDailyLogsPdf(Number(selectedCustomerId), Number(year), Number(month))
+                      )
+                    }
+                  >
+                    {t(lang, "downloadDailyLogsPdf")}
+                  </button>
                 </div>
               </div>
             </section>
