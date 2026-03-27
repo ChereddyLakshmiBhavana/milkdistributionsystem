@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  downloadDailyLogsPdf,
   downloadMonthlyBillsCsv,
   downloadMonthlyEntriesCsv,
   getAdminSummary,
+  getCustomers,
   getMonthlyCollectionsAnalytics,
 } from "../../api/adminApi";
 import { t } from "../../i18n";
@@ -14,6 +16,8 @@ export default function AdminOverviewPage({ lang }) {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [summary, setSummary] = useState(null);
   const [analytics, setAnalytics] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -25,6 +29,21 @@ export default function AdminOverviewPage({ lang }) {
     setSummary(summaryData);
     setAnalytics(analyticsData.months || []);
   };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const customersData = await getCustomers();
+        const approvedCustomers = customersData.filter((item) => item.status === "APPROVED");
+        setCustomers(approvedCustomers);
+        if (approvedCustomers.length > 0) {
+          setSelectedCustomerId(String(approvedCustomers[0].id));
+        }
+      } catch (err) {
+        setError(err?.response?.data?.detail || t(lang, "failedLoadCustomers"));
+      }
+    })();
+  }, [lang]);
 
   useEffect(() => {
     (async () => {
@@ -120,12 +139,34 @@ export default function AdminOverviewPage({ lang }) {
 
       <div className="card">
         <h3>{t(lang, "exportReports")}</h3>
+        <p style={{ marginTop: 0 }}>{t(lang, "exportSelectCustomerHint")}</p>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 1fr)", gap: 10, marginBottom: 10 }}>
+          <select value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
+            <option value="">{t(lang, "selectCustomer")}</option>
+            {customers.map((item) => (
+              <option value={item.id} key={item.id}>
+                {item.name} ({item.phone})
+              </option>
+            ))}
+          </select>
+        </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button onClick={() => doAction(() => downloadMonthlyEntriesCsv(Number(year), Number(month)))}>
             {t(lang, "exportMonthlyEntriesCsv")}
           </button>
           <button onClick={() => doAction(() => downloadMonthlyBillsCsv(Number(year), Number(month)))}>
             {t(lang, "exportMonthlyBillsCsv")}
+          </button>
+          <button
+            onClick={() => {
+              if (!selectedCustomerId) {
+                setError(t(lang, "selectCustomerFirst"));
+                return;
+              }
+              doAction(() => downloadDailyLogsPdf(Number(selectedCustomerId), Number(year), Number(month)));
+            }}
+          >
+            {t(lang, "downloadDailyLogsPdf")}
           </button>
         </div>
       </div>
